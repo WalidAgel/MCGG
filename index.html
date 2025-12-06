@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Bracket Tournament</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #e2e8f0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .input-section {
+            background: #1e293b;
+            padding: 30px;
+            border-left: 1px solid #334155;
+            border-right: 1px solid #334155;
+        }
+
+        .input-section h2 {
+            margin-bottom: 20px;
+            color: #60a5fa;
+        }
+
+        .player-name-input {
+            background: rgba(51, 65, 85, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #475569;
+            margin-bottom: 25px;
+        }
+
+        .player-name-input label {
+            display: block;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .player-name-input input {
+            width: 100%;
+            background: #334155;
+            color: white;
+            border: 1px solid #475569;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .player-name-input input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .opponents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .opponent-input-box {
+            background: rgba(51, 65, 85, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #475569;
+        }
+
+        .opponent-input-box label {
+            display: block;
+            color: #fbbf24;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .opponent-input-box input {
+            width: 100%;
+            background: #334155;
+            color: white;
+            border: 1px solid #475569;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .opponent-input-box input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .results-section {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 0 0 15px 15px;
+            border: 1px solid #334155;
+        }
+
+        .results-section h2 {
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .predictions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .prediction-box {
+            background: rgba(51, 65, 85, 0.5);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #475569;
+        }
+
+        .prediction-box h3 {
+            color: #34d399;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .prediction-list {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .prediction-item {
+            color: #cbd5e1;
+        }
+
+        .prediction-round {
+            color: #fbbf24;
+        }
+
+        .prediction-separator {
+            color: #64748b;
+        }
+
+        .prediction-opponent {
+            color: #34d399;
+        }
+
+        .info-box {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #475569;
+            margin-top: 25px;
+        }
+
+        .info-box p {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #cbd5e1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .bracket-diagram {
+            background: rgba(51, 65, 85, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #475569;
+            margin-bottom: 25px;
+            overflow-x: auto;
+        }
+
+        .bracket-diagram pre {
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .predictions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .opponents-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1> Prefiksi Musuh</h1>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <h2>Input </h2>
+            
+            <!-- Player Name Input -->
+            <div class="player-name-input">
+                <label>Nama Kamu:</label>
+                <input type="text" id="playerName" placeholder="Masukkan nama kamu">
+            </div>
+
+            <!-- 7 Opponents Input -->
+            <h3 style="color: #60a5fa; margin-bottom: 15px;">Masukkan 7 Musuh (Opponents):</h3>
+            <div class="opponents-grid">
+                <div class="opponent-input-box">
+                    <label>Musuh 1:</label>
+                    <input type="text" id="opponent1" placeholder="Nama musuh 1">
+                </div>
+                <div class="opponent-input-box">
+                    <label>Musuh 2:</label>
+                    <input type="text" id="opponent2" placeholder="Nama musuh 2">
+                </div>
+                <div class="opponent-input-box">
+                    <label>Musuh 3:</label>
+                    <input type="text" id="opponent3" placeholder="Nama musuh 3">
+                </div>
+                <div class="opponent-input-box">
+                    <label>Musuh 4:</label>
+                    <input type="text" id="opponent4" placeholder="Nama musuh 4">
+                </div>
+                <div class="opponent-input-box">
+                    <label>Musuh 5:</label>
+                    <input type="text" id="opponent5" placeholder="Nama musuh 5">
+                </div>
+                <div class="opponent-input-box">
+                    <label>Musuh 6:</label>
+                    <input type="text" id="opponent6" placeholder="Nama musuh 6">
+                </div>
+                <div class="opponent-input-box">
+                    <label>Musuh 7:</label>
+                    <input type="text" id="opponent7" placeholder="Nama musuh 7">
+                </div>
+            </div>
+
+            <button class="generate-btn" onclick="generatePredictions()">🔍 Find Opponent Sequence</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section">
+            <h2>Hasil Prediksi</h2>
+            <div id="resultsContainer" class="empty-state">
+                <p>Isi nama kamu dan 7 musuh, lalu klik "Find Opponent Sequence" untuk melihat prediksi bracket.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LOGIKA BRACKET TOURNAMENT 8 PEMAIN
+        // Sistem: Single Elimination Bracket
+        // Round I: 4 pertandingan (8 pemain -> 4 pemenang)
+        // Round II: 2 pertandingan (4 pemain -> 2 pemenang)  
+        // Round III: 1 pertandingan (2 pemain -> 1 pemenang)
+        // Round IV: Final/Championship
+
+        function generatePredictions() {
+            const playerName = document.getElementById('playerName').value.trim();
+            const opponents = [];
+            
+            // Ambil 7 musuh
+            for (let i = 1; i <= 7; i++) {
+                const opponent = document.getElementById(`opponent${i}`).value.trim();
+                if (opponent) {
+                    opponents.push(opponent);
+                }
+            }
+
+            if (!playerName) {
+                alert('Mohon masukkan nama kamu!');
+                return;
+            }
+
+            if (opponents.length !== 7) {
+                alert('Mohon masukkan semua 7 musuh!');
+                return;
+            }
+
+            // Generate 2 kemungkinan bracket path
+            const predictions = generateBracketPaths(playerName, opponents);
+            renderResults(predictions);
+        }
+
+        function generateBracketPaths(player, opponents) {
+            // Dalam bracket 8 pemain, ada banyak kemungkinan path
+            // Tergantung posisi awal di bracket
+            
+            // KEMUNGKINAN 1: Player di posisi bracket atas
+            const path1 = [];
+            
+            // Round II (Quarter Finals)
+            path1.push(`II-4 : ${opponents[0]}`);  // Jika menang Round I
+            path1.push(`II-5 : ${opponents[1]}`);  
+            path1.push(`II-6 : ${opponents[2]}`);
+            
+            // Round III (Semi Finals)
+            path1.push(`III-1 : ${opponents[3]}`); // Winner dari bracket lain
+            path1.push(`III-2 : ${opponents[4]}`);
+            path1.push(`III-4 : ${opponents[5]}`);
+            path1.push(`III-5 : ${opponents[6]}`);
+            path1.push(`III-6 : ${opponents[0]}`); // Rematch possibility
+            
+            // Round IV (Finals)
+            path1.push(`IV-1 : ${opponents[1]}`);
+            path1.push(`IV-2 : ${opponents[2]}`);
+            path1.push(`IV-4 : ${opponents[3]}`);
+            path1.push(`IV-5 : ${opponents[4]}`);
+
+            // KEMUNGKINAN 2: Player di posisi bracket berbeda
+            const path2 = [];
+            
+            // Round II (Quarter Finals)
+            path2.push(`II-4 : ${opponents[1]}`);
+            path2.push(`II-5 : ${opponents[0]}`);
+            path2.push(`II-6 : ${opponents[2]}`);
+            
+            // Round III (Semi Finals)
+            path2.push(`III-1 : ${opponents[3]}`);
+            path2.push(`III-2 : ${opponents[4]}`);
+            path2.push(`III-4 : ${opponents[5]}`);
+            path2.push(`III-5 : ${opponents[6]}`);
+            path2.push(`III-6 : ${opponents[1]}`);
+            
+            // Round IV (Finals)
+            path2.push(`IV-1 : ${opponents[0]}`);
+            path2.push(`IV-2 : ${opponents[2]}`);
+            path2.push(`IV-4 : ${opponents[3]}`);
+            path2.push(`IV-5 : ${opponents[4]}`);
+
+            return {
+                kemungkinan1: path1,
+                kemungkinan2: path2
+            };
+        }
+
+        function renderResults(predictions) {
+            const container = document.getElementById('resultsContainer');
+            
+            container.innerHTML = `
+                <div class="predictions-grid">
+                    <div class="prediction-box">
+                        <h3>Kemungkinan 1</h3>
+                        <div class="prediction-list">
+                            ${predictions.kemungkinan1.map(pred => {
+                                const [round, opponent] = pred.split(' : ');
+                                return `<div class="prediction-item">
+                                    <span class="prediction-round">${round}</span>
+                                    <span class="prediction-separator"> : </span>
+                                    <span class="prediction-opponent">${opponent}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-box">
+                        <h3>Kemungkinan 2</h3>
+                        <div class="prediction-list">
+                            ${predictions.kemungkinan2.map(pred => {
+                                const [round, opponent] = pred.split(' : ');
+                                return `<div class="prediction-item">
+                                    <span class="prediction-round">${round}</span>
+                                    <span class="prediction-separator"> : </span>
+                                    <span class="prediction-opponent">${opponent}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <p><strong>Format:</strong> Kemungkinan 1 (kiri) dan Kemungkinan 2 (kanan).</p>
+                    <p style="margin-top: 10px;"><strong>BY:</strong> windfall.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
