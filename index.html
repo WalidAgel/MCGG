@@ -210,19 +210,54 @@
             color: #64748b;
         }
 
-        .bracket-diagram {
-            background: rgba(51, 65, 85, 0.3);
-            padding: 20px;
-            border-radius: 10px;
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
             border: 1px solid #475569;
-            margin-bottom: 25px;
-            overflow-x: auto;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .bracket-diagram pre {
+        .checkbox-item:hover {
+            background: rgba(51, 65, 85, 0.8);
+            border-color: #ef4444;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #ef4444;
+        }
+
+        .checkbox-item label {
+            color: #e2e8f0;
+            cursor: pointer;
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .checkbox-item.eliminated {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+
+        .checkbox-item.eliminated label {
+            text-decoration: line-through;
             color: #94a3b8;
-            font-size: 12px;
-            line-height: 1.6;
+        }
+
+        .eliminated-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
@@ -240,12 +275,12 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1> Prefiksi Musuh</h1>
+            <h1>🎮 Prediksi Musuh Tournament</h1>
         </div>
 
         <!-- Input Section -->
         <div class="input-section">
-            <h2>Input </h2>
+            <h2>Input Data</h2>
             
             <!-- Player Name Input -->
             <div class="player-name-input">
@@ -289,6 +324,20 @@
             <button class="generate-btn" onclick="generatePredictions()">🔍 Find Opponent Sequence</button>
         </div>
 
+        <!-- Eliminated Opponents Section -->
+        <div class="input-section" style="margin-top: 20px; border-top: 2px solid #475569; padding-top: 30px;">
+            <h2>⚠️ Musuh yang Sudah Mati (Eliminated)</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Centang musuh yang sudah kalah/tereliminasi dari tournament:</p>
+            
+            <div id="eliminatedCheckboxes" class="opponents-grid">
+                <!-- Will be populated dynamically -->
+            </div>
+
+            <button class="generate-btn" onclick="updatePredictionsWithEliminated()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); margin-top: 20px;">
+                🔄 Update Predictions (Remove Eliminated)
+            </button>
+        </div>
+
         <!-- Results Section -->
         <div class="results-section">
             <h2>Hasil Prediksi</h2>
@@ -305,6 +354,9 @@
         // Round II: 2 pertandingan (4 pemain -> 2 pemenang)  
         // Round III: 1 pertandingan (2 pemain -> 1 pemenang)
         // Round IV: Final/Championship
+
+        let currentOpponents = [];
+        let eliminatedOpponents = new Set();
 
         function generatePredictions() {
             const playerName = document.getElementById('playerName').value.trim();
@@ -328,56 +380,144 @@
                 return;
             }
 
+            // Simpan opponents ke global variable
+            currentOpponents = opponents;
+            eliminatedOpponents.clear();
+
+            // Generate checkboxes untuk eliminated opponents
+            generateEliminatedCheckboxes(opponents);
+
             // Generate 2 kemungkinan bracket path
             const predictions = generateBracketPaths(playerName, opponents);
-            renderResults(predictions);
+            renderResults(predictions, opponents);
         }
 
-        function generateBracketPaths(player, opponents) {
+        function generateEliminatedCheckboxes(opponents) {
+            const container = document.getElementById('eliminatedCheckboxes');
+            container.innerHTML = opponents.map((opponent, index) => `
+                <div class="checkbox-item" id="checkbox-${index}">
+                    <input type="checkbox" id="eliminated-${index}" onchange="toggleEliminated(${index})">
+                    <label for="eliminated-${index}">${opponent}</label>
+                </div>
+            `).join('');
+        }
+
+        function toggleEliminated(index) {
+            const checkbox = document.getElementById(`eliminated-${index}`);
+            const checkboxItem = document.getElementById(`checkbox-${index}`);
+            const opponent = currentOpponents[index];
+
+            if (checkbox.checked) {
+                eliminatedOpponents.add(opponent);
+                checkboxItem.classList.add('eliminated');
+                checkboxItem.innerHTML = `
+                    <input type="checkbox" id="eliminated-${index}" checked onchange="toggleEliminated(${index})">
+                    <label for="eliminated-${index}">${opponent}</label>
+                    <span class="eliminated-badge">MATI</span>
+                `;
+            } else {
+                eliminatedOpponents.delete(opponent);
+                checkboxItem.classList.remove('eliminated');
+                checkboxItem.innerHTML = `
+                    <input type="checkbox" id="eliminated-${index}" onchange="toggleEliminated(${index})">
+                    <label for="eliminated-${index}">${opponent}</label>
+                `;
+            }
+        }
+
+        function updatePredictionsWithEliminated() {
+            if (currentOpponents.length === 0) {
+                alert('Mohon generate prediksi terlebih dahulu!');
+                return;
+            }
+
+            const playerName = document.getElementById('playerName').value.trim();
+            
+            // Filter opponents yang masih hidup
+            const aliveOpponents = currentOpponents.filter(opp => !eliminatedOpponents.has(opp));
+
+            if (aliveOpponents.length === 0) {
+                alert('Semua musuh sudah mati! Kamu menang! 🎉');
+                return;
+            }
+
+            // Generate predictions dengan musuh yang masih hidup
+            const predictions = generateBracketPaths(playerName, aliveOpponents, true);
+            renderResults(predictions, aliveOpponents, true);
+        }
+
+        function generateBracketPaths(player, opponents, isUpdated = false) {
             // Dalam bracket 8 pemain, ada banyak kemungkinan path
             // Tergantung posisi awal di bracket
             
-            // KEMUNGKINAN 1: Player di posisi bracket atas
+            // LOGIKA: Ketika musuh mati, kemungkinan path berubah
+            // Hanya musuh yang masih hidup yang bisa jadi lawan
+            
             const path1 = [];
-            
-            // Round II (Quarter Finals)
-            path1.push(`II-4 : ${opponents[0]}`);  // Jika menang Round I
-            path1.push(`II-5 : ${opponents[1]}`);  
-            path1.push(`II-6 : ${opponents[2]}`);
-            
-            // Round III (Semi Finals)
-            path1.push(`III-1 : ${opponents[3]}`); // Winner dari bracket lain
-            path1.push(`III-2 : ${opponents[4]}`);
-            path1.push(`III-4 : ${opponents[5]}`);
-            path1.push(`III-5 : ${opponents[6]}`);
-            path1.push(`III-6 : ${opponents[0]}`); // Rematch possibility
-            
-            // Round IV (Finals)
-            path1.push(`IV-1 : ${opponents[1]}`);
-            path1.push(`IV-2 : ${opponents[2]}`);
-            path1.push(`IV-4 : ${opponents[3]}`);
-            path1.push(`IV-5 : ${opponents[4]}`);
-
-            // KEMUNGKINAN 2: Player di posisi bracket berbeda
             const path2 = [];
             
-            // Round II (Quarter Finals)
-            path2.push(`II-4 : ${opponents[1]}`);
-            path2.push(`II-5 : ${opponents[0]}`);
-            path2.push(`II-6 : ${opponents[2]}`);
+            // Jika ada musuh yang mati, path menjadi lebih pendek
+            const totalOpponents = opponents.length;
             
-            // Round III (Semi Finals)
-            path2.push(`III-1 : ${opponents[3]}`);
-            path2.push(`III-2 : ${opponents[4]}`);
-            path2.push(`III-4 : ${opponents[5]}`);
-            path2.push(`III-5 : ${opponents[6]}`);
-            path2.push(`III-6 : ${opponents[1]}`);
+            if (totalOpponents >= 1) {
+                // Round II (Quarter Finals)
+                path1.push(`II-4 : ${opponents[0]}`);
+                path2.push(`II-4 : ${opponents[Math.min(1, totalOpponents - 1)]}`);
+            }
             
-            // Round IV (Finals)
-            path2.push(`IV-1 : ${opponents[0]}`);
-            path2.push(`IV-2 : ${opponents[2]}`);
-            path2.push(`IV-4 : ${opponents[3]}`);
-            path2.push(`IV-5 : ${opponents[4]}`);
+            if (totalOpponents >= 2) {
+                path1.push(`II-5 : ${opponents[1]}`);
+                path2.push(`II-5 : ${opponents[0]}`);
+            }
+            
+            if (totalOpponents >= 3) {
+                path1.push(`II-6 : ${opponents[2]}`);
+                path2.push(`II-6 : ${opponents[2]}`);
+            }
+            
+            if (totalOpponents >= 4) {
+                // Round III (Semi Finals)
+                path1.push(`III-1 : ${opponents[3]}`);
+                path2.push(`III-1 : ${opponents[3]}`);
+            }
+            
+            if (totalOpponents >= 5) {
+                path1.push(`III-2 : ${opponents[4]}`);
+                path2.push(`III-2 : ${opponents[4]}`);
+            }
+            
+            if (totalOpponents >= 6) {
+                path1.push(`III-4 : ${opponents[5]}`);
+                path2.push(`III-4 : ${opponents[5]}`);
+            }
+            
+            if (totalOpponents >= 7) {
+                path1.push(`III-5 : ${opponents[6]}`);
+                path2.push(`III-5 : ${opponents[6]}`);
+                path1.push(`III-6 : ${opponents[0]}`);
+                path2.push(`III-6 : ${opponents[1]}`);
+            }
+            
+            // Round IV (Finals) - hanya jika masih ada cukup musuh
+            if (totalOpponents >= 2) {
+                path1.push(`IV-1 : ${opponents[1]}`);
+                path2.push(`IV-1 : ${opponents[0]}`);
+            }
+            
+            if (totalOpponents >= 3) {
+                path1.push(`IV-2 : ${opponents[2]}`);
+                path2.push(`IV-2 : ${opponents[2]}`);
+            }
+            
+            if (totalOpponents >= 4) {
+                path1.push(`IV-4 : ${opponents[3]}`);
+                path2.push(`IV-4 : ${opponents[3]}`);
+            }
+            
+            if (totalOpponents >= 5) {
+                path1.push(`IV-5 : ${opponents[4]}`);
+                path2.push(`IV-5 : ${opponents[4]}`);
+            }
 
             return {
                 kemungkinan1: path1,
@@ -385,10 +525,18 @@
             };
         }
 
-        function renderResults(predictions) {
+        function renderResults(predictions, opponents, isUpdated = false) {
             const container = document.getElementById('resultsContainer');
             
+            const eliminatedCount = currentOpponents.length - opponents.length;
+            const statusMessage = isUpdated 
+                ? `<div style="background: rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 8px; border: 1px solid #ef4444; margin-bottom: 20px;">
+                    <p style="color: #fca5a5; font-weight: 600;">⚠️ ${eliminatedCount} musuh sudah mati! Prediksi diperbarui dengan ${opponents.length} musuh yang tersisa.</p>
+                   </div>`
+                : '';
+            
             container.innerHTML = `
+                ${statusMessage}
                 <div class="predictions-grid">
                     <div class="prediction-box">
                         <h3>Kemungkinan 1</h3>
@@ -421,6 +569,7 @@
                 
                 <div class="info-box">
                     <p><strong>Format:</strong> Kemungkinan 1 (kiri) dan Kemungkinan 2 (kanan).</p>
+                    <p style="margin-top: 10px;"><strong>Musuh Aktif:</strong> ${opponents.length} dari ${currentOpponents.length} musuh masih hidup.</p>
                     <p style="margin-top: 10px;"><strong>BY:</strong> windfall.</p>
                 </div>
             `;
